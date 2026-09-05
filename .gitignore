@@ -1,0 +1,15 @@
+.DS_Store
+docker-volumes/
+secrets.md
+
+# Dependencies
+node_modules/
+
+# Build output
+build/
+dist/
+
+# Environment variables
+.env
+.env.*
+!.env.example
