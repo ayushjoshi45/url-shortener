@@ -201,6 +201,13 @@ docker-compose up -d
    - URL Service: http://localhost:3002
    - Analytics Service: http://localhost:3003
 
+### Git Workflow
+
+- `production` holds stable releases.
+- `dev` is the integration branch for all features.
+- Create short-lived branches from `dev` (`feature/<name>`, `fix/<name>`) and merge back with `--no-ff`.
+- Never commit `.env` files. Copy the required variables from your password manager instead.
+
 ### Local Development
 
 Each service can be run independently for development:
