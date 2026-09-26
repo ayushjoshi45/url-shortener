@@ -1,0 +1,116 @@
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres:16
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=users_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker-volumes/postgres:/var/lib/postgresql/data
+
+  mongodb:
+    container_name: mongodb_container
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./docker-volumes/mongodb:/data/db
+
+  redis:
+    container_name: redis_container
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./docker-volumes/redis:/data
+
+  rabbitmq:
+    container_name: rabbitmq_container
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    volumes:
+      - ./docker-volumes/rabbitmq:/var/lib/rabbitmq
+
+  gateway:
+    container_name: gateway_container
+    build:
+      context: ../api-gateway
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - ../api-gateway/.env
+    environment:
+      - USER_SERVICE_URL=http://user_service:3001
+      - URL_SERVICE_URL=http://url_service:3002
+      - ANALYTICS_SERVICE_URL=http://analytics_service:3003
+    depends_on:
+      - user_service
+      - url_service
+      - analytics_service
+
+  user_service:
+    container_name: user_service_container
+    build:
+      context: ../user-service
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3001:3001"
+    env_file:
+      - ../user-service/.env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/users_db
+      - BASE_URL=http://localhost:3000
+      - URL_SERVICE_URL=http://url_service:3002
+    depends_on:
+      - postgres
+
+  url_service:
+    container_name: url_service_container
+    build:
+      context: ../url-service
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3002:3002"
+    env_file:
+      - ../url-service/.env
+    environment:
+      - DATABASE_URL=mongodb://mongodb:27017/urls_db
+      - REDIS_URL=redis://redis:6379
+      - USER_SERVICE_URL=http://user_service:3001
+      - BASE_URL=http://localhost:3000
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+
+  analytics_service:
+    container_name: analytics_service_container
+    build:
+      context: ../analytics-service
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3003:3003"
+    env_file:
+      - ../analytics-service/.env
+    environment:
+      - DATABASE_URL=mongodb://mongodb:27017/analytics_db
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
