@@ -130,9 +130,8 @@ The system consists of four main microservices:
 ### 1. API Gateway
 
 - Entry point for all client requests
-- Handles request routing to appropriate services
-- Implements rate limiting, security headers, and request validation
-- Authentication middleware for protected endpoints
+- Handles request routing to appropriate services via proxy
+- Implements rate limiting, security headers, and CORS
 
 ### 2. URL Service
 
@@ -186,7 +185,7 @@ The system consists of four main microservices:
 │   └── docker-compose.yml
 └── README.md
 
-# Inside each service:
+# Inside each service (the gateway only has common/config/middlewares):
 src/
 ├── common/        # Shared logger, error classes, auth types
 ├── config/        # Env, app, db configuration
@@ -237,7 +236,7 @@ Create a `.env` file inside **each** service directory. These files are git-igno
 | BASE_URL       | http://localhost:3000                          |
 | URL_SERVICE_URL| http://localhost:3002                          |
 | JWT_SECRET     | <generate-a-long-random-string>                 |
-| JWT_EXPIRATION | 1h                                             |
+| JWT_EXPIRES_IN | 1d                                             |
 
 **url-service/.env**
 
@@ -295,16 +294,20 @@ All client traffic goes through the API Gateway (`:3000`).
 - `POST /api/users/register` — Register a new user
 - `POST /api/users/login` — Login and receive a JWT
 - `GET /api/users/me` — Current user details (authenticated)
+- `GET /api/users/validate-token` — Validate a JWT (used by other services)
 
 ### URL Service
 
 - `POST /api/urls` — Create a short URL (authenticated)
-- `GET /api/urls` — List URLs for the authenticated user
+- `GET /api/urls/user` — List URLs for the authenticated user
+- `GET /api/urls/url/:shortCode` — Get a URL by short code (authenticated)
+- `DELETE /api/urls/:id` — Delete a URL (authenticated)
 - `GET /:shortCode` — Redirect to the original URL (public, tracked)
 
 ### Analytics Service
 
 - `GET /api/analytics/:urlId` — Analytics for a specific URL (authenticated)
+- `POST /api/analytics/urls` — Analytics for multiple URLs (authenticated)
 
 ## Branching & Contributing
 
