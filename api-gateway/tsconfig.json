@@ -2,15 +2,14 @@
   "compilerOptions": {
     "target": "es2016",
     "lib": ["dom", "ES2016"],
-    "module": "commonjs",
-    "baseUrl": ".",
+    "module": "nodenext",
     "outDir": "./build",
     "rootDir": "./src",
     "strict": true,
     "noImplicitAny": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "esModuleInterop": true,
     "sourceMap": true,
     "alwaysStrict": true,
@@ -25,8 +24,8 @@
       { "transform": "typescript-transform-paths", "afterDeclarations": true }
     ],
     "paths": {
-      "@api-gateway/*": ["src/*"],
-      "@config/*": ["src/config/*"]
+      "@api-gateway/*": ["./src/*"],
+      "@config/*": ["./src/config/*"]
     }
   },
   "exclude": ["jest.config.ts", "node_modules", "build", "dist"]
