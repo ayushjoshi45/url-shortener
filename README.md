@@ -1,23 +1,25 @@
-# 🚀 URL Shortener Microservices
+# URL Shortener Microservices
 
-A modern, scalable URL shortening platform built using microservices architecture. This project demonstrates my skills and best practices in building distributed systems with Node.js, TypeScript, Docker, Redis caching, and RabbitMQ event-driven communication.
+[![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)](https://expressjs.com/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 
-## 📋 Overview
+A scalable URL shortening platform built with a Node.js microservices architecture. It demonstrates clean architecture, event-driven communication, distributed data stores, caching, and containerized deployment.
 
-This robust URL shortener service provides:
+## Features
 
-- ✅ Fast URL shortening with custom or auto-generated codes
-- ✅ User authentication and management
-- ✅ Comprehensive analytics and tracking
-- ✅ Scalable microservices architecture with distributed data stores
-- ✅ High-performance caching using Redis
-- ✅ Event-driven architecture with RabbitMQ
-- ✅ Containerized deployment with Docker
+- Fast URL shortening with auto-generated codes
+- User registration, login (JWT), and profile
+- Click analytics with browser, OS, device, referrer, and location tracking
+- Redis caching for high-performance redirects
+- Event-driven pipeline (RabbitMQ) from URL clicks to analytics
+- API gateway with rate limiting and security headers
+- Fully containerized with Docker Compose
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'darkMode': true, 'background': '#333', 'primaryTextColor': '#fff' }}}%%
 graph TD
     Client([Client/Browser]) --> Gateway[API Gateway]
 
@@ -33,184 +35,133 @@ graph TD
         URLService --> Redis[(Redis Cache)]
         UserService --> PostgreSQL[(PostgreSQL)]
         AnalyticsService --> MongoDB
-
-        subgraph "User Service"
-            UserService --> UserController[Controller]
-            UserController --> UserService_Service[Service]
-            UserService_Service --> UserRepository[Repository]
-            UserRepository --> PostgreSQL
-        end
-
-        subgraph "URL Service"
-            URLService --> URLController[Controller]
-            URLController --> URLService_Service[Service]
-            URLService_Service --> URLRepository[Repository]
-            URLRepository --> MongoDB
-            URLService_Service --> URLCache[Cache]
-            URLCache --> Redis
-        end
-
-        subgraph "Analytics Service"
-            AnalyticsService --> AnalyticsController[Controller]
-            AnalyticsController --> AnalyticsService_Service[Service]
-            AnalyticsService_Service --> AnalyticsRepository[Repository]
-            AnalyticsRepository --> MongoDB
-            RabbitMQ --> AnalyticsConsumer[Consumer]
-            AnalyticsConsumer --> AnalyticsService_Service
-        end
     end
-
-    class Client,Gateway,UserService,URLService,AnalyticsService,RabbitMQ,MongoDB,Redis,PostgreSQL,UserController,UserService_Service,UserRepository,URLController,URLService_Service,URLRepository,URLCache,AnalyticsController,AnalyticsService_Service,AnalyticsRepository,AnalyticsConsumer nodeStyle
-
-    %% Styles that work in both light and dark modes
-    classDef nodeStyle fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#333
-    classDef microservice fill:#d1f0fd,stroke:#0078d4,stroke-width:2px,color:#333
-    classDef database fill:#e7f5d7,stroke:#5ca53a,stroke-width:2px,color:#333
-    classDef messagebroker fill:#fde7c7,stroke:#ff8c00,stroke-width:2px,color:#333
-    classDef gateway fill:#e7d1fd,stroke:#7b2cbf,stroke-width:2px,color:#333
-    classDef client fill:#f5f5f5,stroke:#333,stroke-width:1px,stroke-dasharray: 5 5,color:#333
-
-    class UserService,URLService,AnalyticsService microservice
-    class MongoDB,PostgreSQL,Redis database
-    class RabbitMQ messagebroker
-    class Gateway gateway
-    class Client client
 ```
 
-## 🧩 Architectural Patterns & Design Principles
+Each service follows the same layered structure (`routes → controllers → services → repositories`) with dependency injection, keeping business logic independent of infrastructure.
 
-This project implements several industry-standard architectural patterns and design principles:
+| Service              | Port | Responsibility                                  | Data Store              |
+| -------------------- | ---- | ----------------------------------------------- | ----------------------- |
+| API Gateway          | 3000 | Single entry point, routing, rate limiting      | —                       |
+| User Service         | 3001 | Registration, login (JWT), current user         | PostgreSQL (Prisma)     |
+| URL Service          | 3002 | Shorten, redirect, cache, publish click events  | MongoDB, Redis          |
+| Analytics Service    | 3003 | Consume click events, serve URL analytics       | MongoDB                 |
 
-### Clean Architecture
+## Tech Stack
 
-- **Separation of Concerns**: Each service is organized into layers with clear boundaries
-- **Domain-Driven Design**: Business logic is isolated from infrastructure concerns
-- **Use Cases**: Business rules are defined as use cases in service layers
-- **Dependency Rule**: Dependencies point inward, with inner layers unaware of outer layers
+- **Runtime & Language:** Node.js 22, TypeScript, Express 5
+- **Databases:** PostgreSQL (Prisma), MongoDB (Mongoose), Redis
+- **Messaging:** RabbitMQ (amqplib)
+- **Auth:** JWT, bcrypt
+- **Validation:** Zod
+- **Shared code:** `src/common` in each service (logger, error classes, auth types)
+- **DevOps:** Docker, Docker Compose
+- **Quality:** ESLint, Prettier, Jest
 
-### Dependency Injection (DI)
+## Project Structure
 
-- **Inversion of Control**: Using TypeScript-based DI containers for service instantiation
-- **Testability**: Dependencies can be easily mocked for unit testing
-- **Loose Coupling**: Components interact through abstractions rather than concrete implementations
+```text
+.
+├── api-gateway/          # Request routing, rate limiting (port 3000)
+├── user-service/         # Auth + users, Prisma/PostgreSQL (port 3001)
+│   └── prisma/           # Schema and migrations
+├── url-service/          # Shortening + redirect, Mongo/Redis (port 3002)
+├── analytics-service/    # Click analytics consumer + API (port 3003)
+├── volumes/
+│   └── docker-compose.yml
+└── README.md
 
-### Repository Pattern
+# Inside each service:
+src/
+├── common/        # Shared logger, error classes, auth types
+├── config/        # Env, app, db configuration
+├── controllers/
+├── services/
+├── repositories/
+├── routes/
+├── middlewares/
+├── app.ts
+└── server.ts
+```
 
-- **Data Access Abstraction**: Repository interfaces isolate business logic from data access
-- **Persistence Ignorance**: Business logic remains independent of specific database implementations
-- **Interchangeable Data Sources**: Ability to swap MongoDB, PostgreSQL, or other datastores with minimal code changes
-
-### SOLID Principles
-
-- **Single Responsibility**: Each class and module has one clear responsibility
-- **Open/Closed**: Entities are open for extension but closed for modification
-- **Liskov Substitution**: Interfaces are designed to ensure subtypes can be substituted for base types
-- **Interface Segregation**: Small, focused interfaces prevent unnecessary dependencies
-- **Dependency Inversion**: High-level modules depend on abstractions, not concrete implementations
-
-### Event-Driven Architecture
-
-- **Message Brokers**: RabbitMQ facilitates loose coupling between services
-- **Asynchronous Communication**: Services communicate through events without direct dependencies
-- **Eventual Consistency**: Data is synchronized across services asynchronously
-- **Fault Tolerance**: Services can continue to operate despite failures in other services
-
-### API Gateway Pattern
-
-- **Single Entry Point**: Unified API interface for all client communications
-- **Cross-Cutting Concerns**: Centralized handling of authentication, logging, and monitoring
-- **Request Routing**: Dynamic routing of requests to appropriate microservices
-- **API Composition**: Aggregation of data from multiple services for client requests
-
-The system consists of four main microservices:
-
-### 1. API Gateway
-
-- Entry point for all client requests
-- Handles request routing to appropriate services
-- Implements rate limiting, security headers, and request validation
-- Authentication middleware for protected endpoints
-
-### 2. URL Service
-
-- Core service for URL shortening functionality
-- Creates and stores short URLs with MongoDB
-- Uses Redis for caching frequently accessed URLs
-- Publishes analytics events to RabbitMQ
-
-### 3. User Service
-
-- Manages user registration and authentication
-- Stores user data in PostgreSQL with Prisma ORM
-- Handles JWT token generation and validation
-- Password encryption with bcrypt
-
-### 4. Analytics Service
-
-- Processes URL access events from RabbitMQ
-- Tracks and stores analytics data in MongoDB
-- Provides detailed analytics on URL performance
-- Captures data on geographic location, referrers, browsers, devices, and OS
-
-## 💾 Data Storage
-
-- **PostgreSQL**: User accounts and related data
-- **MongoDB**: URL mappings and analytics information
-- **Redis**: High-performance caching for frequent URL lookups
-- **RabbitMQ**: Message broker for event-driven communication between services
-
-## 🔧 Tech Stack
-
-- **Backend**: Node.js, Express, TypeScript
-- **Databases**: PostgreSQL, MongoDB, Redis
-- **Message Queue**: RabbitMQ
-- **ORM/ODM**: Prisma (PostgreSQL), Mongoose (MongoDB)
-- **Authentication**: JWT, bcrypt
-- **Containerization**: Docker, Docker Compose
-- **Testing**: Jest
-- **Code Quality**: ESLint, Prettier
-
-## 🛠️ Setup & Installation
+## Getting Started
 
 ### Prerequisites
 
 - Docker and Docker Compose
-- Node.js (for local development)
+- Node.js 22+ (for local development only)
 
-### Quick Start
-
-1. Clone the repository
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/url-shortener-microservices.git
-cd url-shortener-microservices
+git clone https://github.com/ayushjoshi45/url-shortener.git
+cd url-shortener
 ```
 
-2. Create `.env` files for each service (see `.env.example` in each service directory)
+### 2. Configure environment variables
 
-3. Start all services using Docker Compose
+Create a `.env` file inside **each** service directory. These files are git-ignored and never committed.
+
+**api-gateway/.env**
+
+| Variable                | Example               |
+| ----------------------- | --------------------- |
+| PORT                    | 3000                  |
+| USER_SERVICE_URL        | http://localhost:3001 |
+| URL_SERVICE_URL         | http://localhost:3002 |
+| ANALYTICS_SERVICE_URL   | http://localhost:3003 |
+| RATE_LIMIT_WINDOW_MS    | 60000                 |
+| RATE_LIMIT_MAX_REQUESTS | 100                   |
+
+**user-service/.env**
+
+| Variable       | Example                                        |
+| -------------- | ---------------------------------------------- |
+| PORT           | 3001                                           |
+| DATABASE_URL   | postgresql://postgres:postgres@localhost:5432/users_db |
+| BASE_URL       | http://localhost:3000                          |
+| URL_SERVICE_URL| http://localhost:3002                          |
+| JWT_SECRET     | <generate-a-long-random-string>                 |
+| JWT_EXPIRATION | 1h                                             |
+
+**url-service/.env**
+
+| Variable          | Example                          |
+| ----------------- | -------------------------------- |
+| PORT              | 3002                             |
+| DATABASE_URL      | mongodb://localhost:27017/urls_db |
+| REDIS_URL         | redis://localhost:6379           |
+| SHORT_URL_CACHE_TTL | 3600                           |
+| USER_SERVICE_URL  | http://localhost:3001            |
+| BASE_URL          | http://localhost:3000            |
+| RABBITMQ_URL      | amqp://admin:admin@localhost:5672 |
+
+**analytics-service/.env**
+
+| Variable     | Example                               |
+| ------------ | ------------------------------------- |
+| PORT         | 3003                                  |
+| DATABASE_URL | mongodb://localhost:27017/analytics_db |
+| RABBITMQ_URL | amqp://admin:admin@localhost:5672      |
+
+### 3. Run with Docker Compose
 
 ```bash
 cd volumes
-docker-compose up -d
+docker compose up -d --build
 ```
 
-4. The services will be available at:
-   - API Gateway: http://localhost:3000
-   - User Service: http://localhost:3001
-   - URL Service: http://localhost:3002
-   - Analytics Service: http://localhost:3003
+Services will be available at:
 
-### Git Workflow
+- API Gateway: http://localhost:3000
+- User Service: http://localhost:3001
+- URL Service: http://localhost:3002
+- Analytics Service: http://localhost:3003
+- RabbitMQ dashboard: http://localhost:15672
 
-- `production` holds stable releases.
-- `dev` is the integration branch for all features.
-- Create short-lived branches from `dev` (`feature/<name>`, `fix/<name>`) and merge back with `--no-ff`.
-- Never commit `.env` files. Copy the required variables from your password manager instead.
+### 4. Local development (optional)
 
-### Local Development
-
-Each service can be run independently for development:
+Each service runs independently:
 
 ```bash
 cd <service-directory>
@@ -218,38 +169,40 @@ npm install
 npm run dev
 ```
 
-## 📊 API Documentation
+> The compose file wires services together with container hostnames (e.g. `http://user_service:3001`). For local development, point the `*_URL` variables at `localhost` instead.
 
-### URL Service
+## API Reference
 
-- `POST /api/urls` - Create a new short URL
-- `GET /api/urls` - Get all URLs for authenticated user
-- `GET /:shortCode` - Redirect to the original URL
+All client traffic goes through the API Gateway (`:3000`).
 
 ### User Service
 
-- `POST /api/users/register` - Register a new user
-- `POST /api/users/login` - Login and get token
-- `GET /api/users/me` - Get current user details
+- `POST /api/users/register` — Register a new user
+- `POST /api/users/login` — Login and receive a JWT
+- `GET /api/users/me` — Current user details (authenticated)
+
+### URL Service
+
+- `POST /api/urls` — Create a short URL (authenticated)
+- `GET /api/urls` — List URLs for the authenticated user
+- `GET /:shortCode` — Redirect to the original URL (public, tracked)
 
 ### Analytics Service
 
-- `GET /api/analytics/:urlId` - Get analytics for a specific URL
+- `GET /api/analytics/:urlId` — Analytics for a specific URL (authenticated)
 
-## 🚀 Future Improvements
+## Branching & Contributing
 
-- Web dashboard for user management and analytics
-- Custom domain support
-- Advanced analytics visualizations
-- QR code generation for short URLs
-- Expiration dates for links
-- API rate limiting tiers
-- ELK Stack (Elasticsearch, Logstash, Kibana) for centralized logging and monitoring
+- `production` — stable releases (protected, no direct pushes)
+- `dev` — integration branch for all features (protected, no direct pushes)
+- `feature/<name>` / `fix/<name>` — short-lived branches off `dev`, merged back via pull request
 
-## 👤 Author
+Rules:
 
-Created by Vusal Huseynov as a demonstration of microservices architecture best practices using modern web technologies.
+1. Never commit `.env` files or secrets.
+2. Keep services independent — shared code lives in `src/common`.
+3. Add/update tests for service changes (`npm test`).
 
----
+## Maintainer
 
-⭐ If you find this project useful, please consider giving it a star!
+Maintained by [@ayushjoshi45](https://github.com/ayushjoshi45).
