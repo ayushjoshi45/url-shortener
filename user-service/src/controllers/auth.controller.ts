@@ -62,17 +62,10 @@ export class AuthController {
       const user = req.user as User;
       const { token } = this.authService.issueToken(user);
 
-      // Same http-only cookie contract as password login. Cookie host is
-      // `localhost`, so the UI on another localhost port receives it too.
-      res.cookie('token', token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        path: '/',
-        maxAge: 24 * 60 * 60 * 1000,
-      });
+      const target = new URL('/api/auth/google/callback', googleConfig.frontendUrl);
+      target.searchParams.set('token', token);
 
-      res.redirect(`${googleConfig.frontendUrl}/dashboard`);
+      res.redirect(target.toString());
     } catch (error) {
       next(error);
     }
