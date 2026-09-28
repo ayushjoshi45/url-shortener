@@ -3,7 +3,7 @@ import {
   RegisterUserDto,
   UserResponseDto,
 } from '@user-service/dtos/user.dto';
-import { User } from '@user-service/generated/prisma';
+import { User } from '../generated/prisma';
 import { UserRepository } from '@user-service/repositories/user.repository';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';

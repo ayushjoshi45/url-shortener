@@ -1,4 +1,4 @@
-import { PrismaClient } from '@user-service/generated/prisma';
+import { PrismaClient } from '../generated/prisma';
 import { createUserRepository } from '@user-service/repositories/user.repository';
 import { createAuthService } from '@user-service/services/auth.service';
 import { createAuthController } from '@user-service/controllers/auth.controller';
