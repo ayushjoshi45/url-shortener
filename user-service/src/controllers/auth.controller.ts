@@ -4,6 +4,8 @@ import {
   loginUserSchema,
   registerUserSchema,
 } from '@user-service/dtos/user.dto';
+import { User } from '@user-service/interfaces/user.interface';
+import googleConfig from '@user-service/config/google.config';
 import { StatusCodes } from 'http-status-codes';
 
 export class AuthController {
@@ -49,6 +51,28 @@ export class AuthController {
       const user = await this.authService.validateToken(token);
 
       res.status(StatusCodes.OK).json(user);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async googleCallback(req: Request, res: Response, next: NextFunction) {
+    try {
+      // Set by passport from the verified Google profile (session: false).
+      const user = req.user as User;
+      const { token } = this.authService.issueToken(user);
+
+      // Same http-only cookie contract as password login. Cookie host is
+      // `localhost`, so the UI on another localhost port receives it too.
+      res.cookie('token', token, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+
+      res.redirect(`${googleConfig.frontendUrl}/dashboard`);
     } catch (error) {
       next(error);
     }

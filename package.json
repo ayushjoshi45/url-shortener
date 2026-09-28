@@ -1,0 +1,13 @@
+{
+  "name": "url-shortener",
+  "version": "1.0.0",
+  "private": true,
+  "description": "URL shortener microservices — local orchestration",
+  "scripts": {
+    "devall": "concurrently --names \"gateway,user,url,analytics\" --prefix-colors \"cyan,magenta,yellow,green\" \"npm run dev --prefix api-gateway\" \"npm run dev --prefix user-service\" \"npm run dev --prefix url-service\" \"npm run dev --prefix analytics-service\"",
+    "install:all": "npm install && npm --prefix api-gateway install && npm --prefix user-service install && npm --prefix url-service install && npm --prefix analytics-service install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

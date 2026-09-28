@@ -43,6 +43,11 @@ export class AuthService {
       throw new BadRequestError('Wrong email or password');
     }
 
+    // Google-only accounts have no password — they must use Google sign-in.
+    if (!user.password) {
+      throw new BadRequestError('Please sign in with Google');
+    }
+
     const isPasswordValid = await bcrypt.compare(
       loginData.password,
       user.password
@@ -60,6 +65,38 @@ export class AuthService {
     };
   }
 
+  public async findOrCreateGoogleUser(profile: {
+    googleId: string;
+    email: string;
+  }): Promise<User> {
+    const linked = await this.userRepository.findByGoogleId(profile.googleId);
+
+    if (linked) {
+      return linked;
+    }
+
+    const existing = await this.userRepository.findByEmail(profile.email);
+
+    // Same email registered with password before — link Google to it.
+    if (existing) {
+      return this.userRepository.linkGoogleId(existing.id, profile.googleId);
+    }
+
+    return this.userRepository.createWithGoogle({
+      email: profile.email,
+      googleId: profile.googleId,
+    });
+  }
+
+  public issueToken(user: User): {
+    user: UserResponseDto;
+    token: string;
+  } {
+    return {
+      user: this.mapUserToDto(user),
+      token: this.generateToken(user),
+    };
+  }
   async validateToken(token: string): Promise<UserResponseDto> {
     try {
       const payload = jwt.verify(token, jwtConfig.secret) as IAuthPayload;
@@ -78,7 +115,7 @@ export class AuthService {
 
   private generateToken(user: User): string {
     return jwt.sign(
-      { id: user.id, email: user.email, username: user.username },
+      { id: user.id, email: user.email, username: deriveUsername(user.email) },
       jwtConfig.secret,
       {
         expiresIn: jwtConfig.expiresIn,
@@ -90,10 +127,17 @@ export class AuthService {
     return {
       id: user.id,
       email: user.email,
-      username: user.username,
+      username: deriveUsername(user.email),
       createdAt: user.createdAt,
     };
   }
+}
+
+// Display-only username derived from the email local-part. Identity stays
+// the email itself, so same-prefix collisions across domains are harmless.
+function deriveUsername(email: string): string {
+  const localPart = email.split('@')[0] ?? '';
+  return localPart.length > 0 ? localPart : email;
 }
 
 export const createAuthService = (userRepository: UserRepository) =>

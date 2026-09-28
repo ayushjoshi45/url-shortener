@@ -1,8 +1,8 @@
 export interface User {
   id: string;
   email: string;
-  username: string;
-  password: string;
+  password: string | null;
+  googleId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
