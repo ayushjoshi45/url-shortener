@@ -18,7 +18,6 @@ describe('AuthService', () => {
   it('should register a new user', async () => {
     const userData: RegisterUserDto = {
       email: 'test@example.com',
-      username: 'testuser',
       password: 'test_password',
     };
 
@@ -28,7 +27,7 @@ describe('AuthService', () => {
       expect.objectContaining({
         id: expect.any(String),
         email: userData.email,
-        username: userData.username,
+        username: 'test',
         createdAt: expect.any(Date),
       })
     );
