@@ -1,5 +1,5 @@
 import { RegisterUserDto } from '@user-service/dtos/user.dto';
-import { PrismaClient } from '@user-service/generated/prisma';
+import { PrismaClient } from '../generated/prisma';
 import { User } from '@user-service/interfaces/user.interface';
 
 export interface CreateGoogleUserData {
