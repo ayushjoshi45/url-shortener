@@ -1,18 +1,21 @@
-# 🚀 URL Shortener Microservices
+# URL Shortener Microservices
 
-A modern, scalable URL shortening platform built using microservices architecture. This project demonstrates my skills and best practices in building distributed systems with Node.js, TypeScript, Docker, Redis caching, and RabbitMQ event-driven communication.
+[![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)](https://expressjs.com/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 
-## 📋 Overview
+A scalable URL shortening platform built with a Node.js microservices architecture. It demonstrates clean architecture, event-driven communication, distributed data stores, caching, and containerized deployment.
 
-This robust URL shortener service provides:
+## Features
 
-- ✅ Fast URL shortening with custom or auto-generated codes
-- ✅ User authentication and management
-- ✅ Comprehensive analytics and tracking
-- ✅ Scalable microservices architecture with distributed data stores
-- ✅ High-performance caching using Redis
-- ✅ Event-driven architecture with RabbitMQ
-- ✅ Containerized deployment with Docker
+- Fast URL shortening with auto-generated codes
+- User registration, login (JWT), and profile
+- Click analytics with browser, OS, device, referrer, and location tracking
+- Redis caching for high-performance redirects
+- Event-driven pipeline (RabbitMQ) from URL clicks to analytics
+- API gateway with rate limiting and security headers
+- Fully containerized with Docker Compose
 
 ## 🏗️ Architecture
 
@@ -127,9 +130,8 @@ The system consists of four main microservices:
 ### 1. API Gateway
 
 - Entry point for all client requests
-- Handles request routing to appropriate services
-- Implements rate limiting, security headers, and request validation
-- Authentication middleware for protected endpoints
+- Handles request routing to appropriate services via proxy
+- Implements rate limiting, security headers, and CORS
 
 ### 2. URL Service
 
@@ -159,58 +161,121 @@ The system consists of four main microservices:
 - **Redis**: High-performance caching for frequent URL lookups
 - **RabbitMQ**: Message broker for event-driven communication between services
 
-## 🔧 Tech Stack
+## Tech Stack
 
-- **Backend**: Node.js, Express, TypeScript
-- **Databases**: PostgreSQL, MongoDB, Redis
-- **Message Queue**: RabbitMQ
-- **ORM/ODM**: Prisma (PostgreSQL), Mongoose (MongoDB)
-- **Authentication**: JWT, bcrypt
-- **Containerization**: Docker, Docker Compose
-- **Testing**: Jest
-- **Code Quality**: ESLint, Prettier
+- **Runtime & Language:** Node.js 22, TypeScript, Express 5
+- **Databases:** PostgreSQL (Prisma), MongoDB (Mongoose), Redis
+- **Messaging:** RabbitMQ (amqplib)
+- **Auth:** JWT, bcrypt
+- **Validation:** Zod
+- **Shared code:** `src/common` in each service (logger, error classes, auth types)
+- **DevOps:** Docker, Docker Compose
+- **Quality:** ESLint, Prettier, Jest
 
-## 🛠️ Setup & Installation
+## Project Structure
+
+```text
+.
+├── api-gateway/          # Request routing, rate limiting (port 3000)
+├── user-service/         # Auth + users, Prisma/PostgreSQL (port 3001)
+│   └── prisma/           # Schema and migrations
+├── url-service/          # Shortening + redirect, Mongo/Redis (port 3002)
+├── analytics-service/    # Click analytics consumer + API (port 3003)
+├── volumes/
+│   └── docker-compose.yml
+└── README.md
+
+# Inside each service (the gateway only has common/config/middlewares):
+src/
+├── common/        # Shared logger, error classes, auth types
+├── config/        # Env, app, db configuration
+├── controllers/
+├── services/
+├── repositories/
+├── routes/
+├── middlewares/
+├── app.ts
+└── server.ts
+```
+
+## Getting Started
 
 ### Prerequisites
 
 - Docker and Docker Compose
-- Node.js (for local development)
+- Node.js 22+ (for local development only)
 
-### Quick Start
-
-1. Clone the repository
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/url-shortener-microservices.git
-cd url-shortener-microservices
+git clone https://github.com/ayushjoshi45/url-shortener.git
+cd url-shortener
 ```
 
-2. Create `.env` files for each service (see `.env.example` in each service directory)
+### 2. Configure environment variables
 
-3. Start all services using Docker Compose
+Create a `.env` file inside **each** service directory. These files are git-ignored and never committed.
+
+**api-gateway/.env**
+
+| Variable                | Example               |
+| ----------------------- | --------------------- |
+| PORT                    | 3000                  |
+| USER_SERVICE_URL        | http://localhost:3001 |
+| URL_SERVICE_URL         | http://localhost:3002 |
+| ANALYTICS_SERVICE_URL   | http://localhost:3003 |
+| RATE_LIMIT_WINDOW_MS    | 60000                 |
+| RATE_LIMIT_MAX_REQUESTS | 100                   |
+
+**user-service/.env**
+
+| Variable       | Example                                        |
+| -------------- | ---------------------------------------------- |
+| PORT           | 3001                                           |
+| DATABASE_URL   | postgresql://postgres:postgres@localhost:5432/users_db |
+| BASE_URL       | http://localhost:3000                          |
+| URL_SERVICE_URL| http://localhost:3002                          |
+| JWT_SECRET     | <generate-a-long-random-string>                 |
+| JWT_EXPIRES_IN | 1d                                             |
+
+**url-service/.env**
+
+| Variable          | Example                          |
+| ----------------- | -------------------------------- |
+| PORT              | 3002                             |
+| DATABASE_URL      | mongodb://localhost:27017/urls_db |
+| REDIS_URL         | redis://localhost:6379           |
+| SHORT_URL_CACHE_TTL | 3600                           |
+| USER_SERVICE_URL  | http://localhost:3001            |
+| BASE_URL          | http://localhost:3000            |
+| RABBITMQ_URL      | amqp://admin:admin@localhost:5672 |
+
+**analytics-service/.env**
+
+| Variable     | Example                               |
+| ------------ | ------------------------------------- |
+| PORT         | 3003                                  |
+| DATABASE_URL | mongodb://localhost:27017/analytics_db |
+| RABBITMQ_URL | amqp://admin:admin@localhost:5672      |
+
+### 3. Run with Docker Compose
 
 ```bash
 cd volumes
-docker-compose up -d
+docker compose up -d --build
 ```
 
-4. The services will be available at:
-   - API Gateway: http://localhost:3000
-   - User Service: http://localhost:3001
-   - URL Service: http://localhost:3002
-   - Analytics Service: http://localhost:3003
+Services will be available at:
 
-### Git Workflow
+- API Gateway: http://localhost:3000
+- User Service: http://localhost:3001
+- URL Service: http://localhost:3002
+- Analytics Service: http://localhost:3003
+- RabbitMQ dashboard: http://localhost:15672
 
-- `production` holds stable releases.
-- `dev` is the integration branch for all features.
-- Create short-lived branches from `dev` (`feature/<name>`, `fix/<name>`) and merge back with `--no-ff`.
-- Never commit `.env` files. Copy the required variables from your password manager instead.
+### 4. Local development (optional)
 
-### Local Development
-
-Each service can be run independently for development:
+Each service runs independently:
 
 ```bash
 cd <service-directory>
@@ -218,38 +283,44 @@ npm install
 npm run dev
 ```
 
-## 📊 API Documentation
+> The compose file wires services together with container hostnames (e.g. `http://user_service:3001`). For local development, point the `*_URL` variables at `localhost` instead.
 
-### URL Service
+## API Reference
 
-- `POST /api/urls` - Create a new short URL
-- `GET /api/urls` - Get all URLs for authenticated user
-- `GET /:shortCode` - Redirect to the original URL
+All client traffic goes through the API Gateway (`:3000`).
 
 ### User Service
 
-- `POST /api/users/register` - Register a new user
-- `POST /api/users/login` - Login and get token
-- `GET /api/users/me` - Get current user details
+- `POST /api/users/register` — Register a new user
+- `POST /api/users/login` — Login and receive a JWT
+- `GET /api/users/me` — Current user details (authenticated)
+- `GET /api/users/validate-token` — Validate a JWT (used by other services)
+
+### URL Service
+
+- `POST /api/urls` — Create a short URL (authenticated)
+- `GET /api/urls/user` — List URLs for the authenticated user
+- `GET /api/urls/url/:shortCode` — Get a URL by short code (authenticated)
+- `DELETE /api/urls/:id` — Delete a URL (authenticated)
+- `GET /:shortCode` — Redirect to the original URL (public, tracked)
 
 ### Analytics Service
 
-- `GET /api/analytics/:urlId` - Get analytics for a specific URL
+- `GET /api/analytics/:urlId` — Analytics for a specific URL (authenticated)
+- `POST /api/analytics/urls` — Analytics for multiple URLs (authenticated)
 
-## 🚀 Future Improvements
+## Branching & Contributing
 
-- Web dashboard for user management and analytics
-- Custom domain support
-- Advanced analytics visualizations
-- QR code generation for short URLs
-- Expiration dates for links
-- API rate limiting tiers
-- ELK Stack (Elasticsearch, Logstash, Kibana) for centralized logging and monitoring
+- `production` — stable releases (protected, no direct pushes)
+- `dev` — integration branch for all features (protected, no direct pushes)
+- `feature/<name>` / `fix/<name>` — short-lived branches off `dev`, merged back via pull request
 
-## 👤 Author
+Rules:
 
-Created by Vusal Huseynov as a demonstration of microservices architecture best practices using modern web technologies.
+1. Never commit `.env` files or secrets.
+2. Keep services independent — shared code lives in `src/common`.
+3. Add/update tests for service changes (`npm test`).
 
----
+## Maintainer
 
-⭐ If you find this project useful, please consider giving it a star!
+Maintained by [@ayushjoshi45](https://github.com/ayushjoshi45).

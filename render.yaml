@@ -1,0 +1,57 @@
+# Single-container Blueprint: all four microservices in one free web service.
+# External state only — Neon (users), Atlas (urls + analytics), Upstash (redis),
+# CloudAMQP (rabbitmq). Values marked sync:false are filled in the dashboard
+# on first deploy and never committed.
+#
+# How to use:
+#   1. Push this file, then Dashboard -> New -> Blueprint -> select this repo.
+#   2. Fill in the prompted secret values.
+#   3. In Google Cloud Console add the redirect URI shown in the deploy logs:
+#      <BASE_URL>/api/users/auth/google/callback
+#      (BASE_URL defaults to Render's public URL for this service.)
+
+services:
+  - type: web
+    name: urlshortener-backend
+    runtime: docker
+    plan: free
+    numInstances: 1
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      # Neon Postgres (user-service). Same URL as local .env.
+      - key: DATABASE_URL
+        sync: false
+      # MongoDB Atlas: urls_db database.
+      - key: URLS_DB_URL
+        sync: false
+      # MongoDB Atlas: analytics_db database.
+      - key: ANALYTICS_DB_URL
+        sync: false
+      # Upstash Redis connection string.
+      - key: REDIS_URL
+        sync: false
+      # CloudAMQP connection string.
+      - key: RABBITMQ_URL
+        sync: false
+      - key: SHORT_URL_CACHE_TTL
+        value: 3600
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      # Google OAuth (same client; add the production callback URI in Console).
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      # Public UI origin for post-OAuth redirects (your deployed frontend).
+      - key: FRONTEND_URL
+        sync: false
+      # Optional overrides — defaults are derived in start.sh:
+      # BASE_URL defaults to Render's public URL, GOOGLE_CALLBACK_URL to
+      # <BASE_URL>/api/users/auth/google/callback.

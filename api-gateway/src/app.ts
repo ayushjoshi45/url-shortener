@@ -23,7 +23,7 @@ app.use(
   createProxyMiddleware({
     target: appConfig.userServiceUrl,
     changeOrigin: true,
-    pathRewrite: { '^/api/users': '/users' },
+    pathRewrite: { '^/api/users': '' },
   })
 );
 app.use(
@@ -31,7 +31,7 @@ app.use(
   createProxyMiddleware({
     target: appConfig.urlServiceUrl,
     changeOrigin: true,
-    pathRewrite: { '^/api/urls': '/urls' },
+    pathRewrite: { '^/api/urls': '' },
   })
 );
 app.use(
@@ -39,7 +39,7 @@ app.use(
   createProxyMiddleware({
     target: appConfig.analyticsServiceUrl,
     changeOrigin: true,
-    pathRewrite: { '^/api/analytics': '/analytics' },
+    pathRewrite: { '^/api/analytics': '' },
   })
 );
 

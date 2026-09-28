@@ -2,11 +2,16 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { container } from './di/container';
+import { createGoogleStrategy, passport } from './auth/google.strategy';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { StatusCodes } from 'http-status-codes';
 import appConfig from './config/app.config';
 
 const app = express();
+
+// Stateless Google OAuth (no sessions) — wired after the service exists.
+passport.use(createGoogleStrategy(container.services.authService));
+app.use(passport.initialize());
 
 // Middleware
 app.use(helmet());

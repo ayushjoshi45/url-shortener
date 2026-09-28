@@ -2,7 +2,6 @@ import { User } from '@user-service/interfaces/user.interface';
 
 export const mockUser = {
   email: 'test@example.com',
-  username: 'testuser',
   password: 'test_password',
 };
 

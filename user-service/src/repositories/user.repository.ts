@@ -1,6 +1,11 @@
 import { RegisterUserDto } from '@user-service/dtos/user.dto';
-import { PrismaClient } from '@user-service/generated/prisma';
+import { PrismaClient } from '../generated/prisma';
 import { User } from '@user-service/interfaces/user.interface';
+
+export interface CreateGoogleUserData {
+  email: string;
+  googleId: string;
+}
 
 export class UserRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -11,9 +16,28 @@ export class UserRepository {
     });
   }
 
+  async createWithGoogle(userData: CreateGoogleUserData): Promise<User> {
+    return this.prisma.user.create({
+      data: userData,
+    });
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: { email },
+    });
+  }
+
+  async findByGoogleId(googleId: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { googleId },
+    });
+  }
+
+  async linkGoogleId(id: string, googleId: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data: { googleId },
     });
   }
 

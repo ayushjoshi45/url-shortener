@@ -15,7 +15,6 @@ describe('UserRepository', () => {
     it('should create and return a user', async () => {
       const userData = {
         email: mockUser.email,
-        username: mockUser.username,
         password: mockUser.password,
       };
 
@@ -25,7 +24,6 @@ describe('UserRepository', () => {
         expect.objectContaining({
           id: expect.any(String),
           email: userData.email,
-          username: userData.username,
         })
       );
 

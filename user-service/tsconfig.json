@@ -3,14 +3,12 @@
     "target": "es2016",
     "lib": ["dom", "ES2016"],
     "module": "commonjs",
-    "baseUrl": ".",
     "outDir": "./build",
     "rootDir": "./src",
     "strict": true,
     "noImplicitAny": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "moduleResolution": "node",
     "esModuleInterop": true,
     "sourceMap": true,
     "alwaysStrict": true,
@@ -25,8 +23,8 @@
       { "transform": "typescript-transform-paths", "afterDeclarations": true }
     ],
     "paths": {
-      "@user-service/*": ["src/*"],
-      "@config/*": ["src/config/*"]
+      "@user-service/*": ["./src/*"],
+      "@config/*": ["./src/config/*"]
     }
   },
   "include": ["src/**/*"],
