@@ -7,6 +7,9 @@
 
 A scalable URL shortening platform built with a Node.js microservices architecture. It demonstrates clean architecture, event-driven communication, distributed data stores, caching, and containerized deployment.
 
+- **Live app:** https://shortner.ayushjoshi.tech/
+- **Frontend:** [ayushjoshi45/url-shortener-ui](https://github.com/ayushjoshi45/url-shortener-ui) (Next.js — talks to these services exclusively through the API Gateway)
+
 ## Features
 
 - Fast URL shortening with auto-generated codes
