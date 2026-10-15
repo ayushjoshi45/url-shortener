@@ -39,6 +39,8 @@ export const createAuthRouter = (authController: AuthController) => {
     authController.changePassword.bind(authController)
   );
 
+  router.delete('/me', authController.deleteMe.bind(authController));
+
   // Google OAuth. Gateway strips /api/users, so the public callback URL is
   // {GATEWAY}/api/users/auth/google/callback — whitelisted in Google Console.
   router.get(

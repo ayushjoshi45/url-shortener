@@ -4,6 +4,7 @@ export interface User {
   password: string | null;
   googleId: string | null;
   name: string | null;
+  isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

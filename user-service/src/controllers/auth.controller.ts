@@ -123,6 +123,18 @@ export class AuthController {
     }
   }
 
+  async deleteMe(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const current = await this.resolveUser(req);
+
+      await this.authService.deleteAccount(current.id);
+
+      res.status(StatusCodes.NO_CONTENT).end();
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async changePassword(
     req: Request,
     res: Response,

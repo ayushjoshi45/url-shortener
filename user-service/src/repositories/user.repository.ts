@@ -56,6 +56,13 @@ export class UserRepository {
       data,
     });
   }
+
+  async softDelete(id: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data: { isDeleted: true },
+    });
+  }
 }
 
 export const createUserRepository = (prisma: PrismaClient) =>

@@ -93,4 +93,43 @@ describe('AuthService', () => {
       })
     ).rejects.toThrow('Current password is incorrect');
   });
+
+  it('should soft-delete and block login afterwards', async () => {
+    const created = await authService.register({
+      email: 'bye@example.com',
+      password: 'password123',
+    });
+
+    await authService.deleteAccount(created.id);
+
+    await expect(
+      authService.login({ email: 'bye@example.com', password: 'password123' })
+    ).rejects.toThrow('Wrong email or password');
+  });
+
+  it('should block re-registering a deleted email', async () => {
+    const created = await authService.register({
+      email: 'gone@example.com',
+      password: 'password123',
+    });
+
+    await authService.deleteAccount(created.id);
+
+    await expect(
+      authService.register({ email: 'gone@example.com', password: 'password123' })
+    ).rejects.toThrow('cannot be registered again');
+  });
+
+  it('should block Google sign-in for a deleted account', async () => {
+    const created = await authService.register({
+      email: 'goo@example.com',
+      password: 'password123',
+    });
+
+    await authService.deleteAccount(created.id);
+
+    await expect(
+      authService.findOrCreateGoogleUser({ googleId: 'g-1', email: 'goo@example.com' })
+    ).rejects.toThrow('cannot be used again');
+  });
 });

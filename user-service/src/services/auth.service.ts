@@ -22,6 +22,11 @@ export class AuthService {
     const existingUser = await this.userRepository.findByEmail(userData.email);
 
     if (existingUser) {
+      if (existingUser.isDeleted) {
+        throw new BadRequestError(
+          'This account was deleted and cannot be registered again'
+        );
+      }
       throw new BadRequestError('User with this email already exists');
     }
 
@@ -41,7 +46,7 @@ export class AuthService {
   }> {
     const user = await this.userRepository.findByEmail(loginData.email);
 
-    if (!user) {
+    if (!user || user.isDeleted) {
       throw new BadRequestError('Wrong email or password');
     }
 
@@ -88,7 +93,7 @@ export class AuthService {
   ): Promise<UserResponseDto> {
     const user = await this.userRepository.findById(userId);
 
-    if (!user) {
+    if (!user || user.isDeleted) {
       throw new BadRequestError('User not found');
     }
 
@@ -116,12 +121,28 @@ export class AuthService {
     return this.mapUserToDto(updated);
   }
 
-  public async findOrCreateGoogleUser(profile: {    googleId: string;
+  public async deleteAccount(userId: string): Promise<UserResponseDto> {
+    const user = await this.userRepository.findById(userId);
+
+    if (!user || user.isDeleted) {
+      throw new BadRequestError('User not found');
+    }
+
+    const deleted = await this.userRepository.softDelete(userId);
+
+    return this.mapUserToDto(deleted);
+  }
+
+  public async findOrCreateGoogleUser(profile: {
+    googleId: string;
     email: string;
   }): Promise<User> {
     const linked = await this.userRepository.findByGoogleId(profile.googleId);
 
     if (linked) {
+      if (linked.isDeleted) {
+        throw new BadRequestError('This account was deleted and cannot be used again');
+      }
       return linked;
     }
 
@@ -129,6 +150,9 @@ export class AuthService {
 
     // Same email registered with password before — link Google to it.
     if (existing) {
+      if (existing.isDeleted) {
+        throw new BadRequestError('This account was deleted and cannot be used again');
+      }
       return this.userRepository.linkGoogleId(existing.id, profile.googleId);
     }
 
@@ -153,7 +177,7 @@ export class AuthService {
 
       const user = await this.userRepository.findById(payload.id);
 
-      if (!user) {
+      if (!user || user.isDeleted) {
         throw new BadRequestError('User not found');
       }
 
