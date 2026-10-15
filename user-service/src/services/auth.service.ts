@@ -1,6 +1,8 @@
 import {
+  ChangePasswordDto,
   LoginUserDto,
   RegisterUserDto,
+  UpdateProfileDto,
   UserResponseDto,
 } from '@user-service/dtos/user.dto';
 import { User } from '../generated/prisma';
@@ -65,8 +67,56 @@ export class AuthService {
     };
   }
 
-  public async findOrCreateGoogleUser(profile: {
-    googleId: string;
+  public async updateProfile(
+    userId: string,
+    profileData: UpdateProfileDto
+  ): Promise<UserResponseDto> {
+    const name = profileData.name.trim();
+
+    if (name.length === 0) {
+      throw new BadRequestError('Name cannot be empty');
+    }
+
+    const user = await this.userRepository.update(userId, { name });
+
+    return this.mapUserToDto(user);
+  }
+
+  public async changePassword(
+    userId: string,
+    passwordData: ChangePasswordDto
+  ): Promise<UserResponseDto> {
+    const user = await this.userRepository.findById(userId);
+
+    if (!user) {
+      throw new BadRequestError('User not found');
+    }
+
+    if (!user.password) {
+      throw new BadRequestError(
+        'Your account uses Google sign-in and has no password to change'
+      );
+    }
+
+    const isCurrentValid = await bcrypt.compare(
+      passwordData.currentPassword,
+      user.password
+    );
+
+    if (!isCurrentValid) {
+      throw new BadRequestError('Current password is incorrect');
+    }
+
+    const hashedPassword = await bcrypt.hash(passwordData.newPassword, 10);
+
+    const updated = await this.userRepository.update(userId, {
+      password: hashedPassword,
+    });
+
+    return this.mapUserToDto(updated);
+  }
+
+  public async findOrCreateGoogleUser(profile: {    googleId: string;
     email: string;
   }): Promise<User> {
     const linked = await this.userRepository.findByGoogleId(profile.googleId);
@@ -128,6 +178,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       username: deriveUsername(user.email),
+      name: user.name,
       createdAt: user.createdAt,
     };
   }
