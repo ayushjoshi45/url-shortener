@@ -20,6 +20,8 @@ model User {
   email     String   @unique
   password  String?
   googleId  String?  @unique
+  name      String?
+  isDeleted Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

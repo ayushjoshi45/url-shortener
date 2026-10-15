@@ -1,8 +1,10 @@
 import { AuthController } from '@user-service/controllers/auth.controller';
 import { validateRequest } from '@user-service/middlewares/validation.middleware';
 import {
+  changePasswordRequestSchema,
   loginSchema,
   registerSchema,
+  updateProfileRequestSchema,
 } from '@user-service/validations/auth.schema';
 import googleConfig from '@user-service/config/google.config';
 import { passport } from '@user-service/auth/google.strategy';
@@ -24,6 +26,20 @@ export const createAuthRouter = (authController: AuthController) => {
   );
 
   router.get('/me', authController.me.bind(authController));
+
+  router.put(
+    '/me',
+    validateRequest(updateProfileRequestSchema),
+    authController.updateMe.bind(authController)
+  );
+
+  router.post(
+    '/auth/change-password',
+    validateRequest(changePasswordRequestSchema),
+    authController.changePassword.bind(authController)
+  );
+
+  router.delete('/me', authController.deleteMe.bind(authController));
 
   // Google OAuth. Gateway strips /api/users, so the public callback URL is
   // {GATEWAY}/api/users/auth/google/callback — whitelisted in Google Console.

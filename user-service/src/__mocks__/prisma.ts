@@ -34,5 +34,15 @@ export class MockPrismaClient {
       const user = this.users.find((user) => user.id === where.id);
       return Promise.resolve(user || null);
     }),
+    update: jest.fn().mockImplementation(({ where, data }) => {
+      const index = this.users.findIndex((user) => user.id === where.id);
+      if (index === -1) throw new Error('User not found');
+      this.users[index] = {
+        ...this.users[index],
+        ...data,
+        updatedAt: new Date(),
+      };
+      return Promise.resolve(this.users[index]);
+    }),
   };
 }

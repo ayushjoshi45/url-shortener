@@ -46,6 +46,23 @@ export class UserRepository {
       where: { id },
     });
   }
+
+  async update(
+    id: string,
+    data: { name?: string | null; password?: string }
+  ): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async softDelete(id: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data: { isDeleted: true },
+    });
+  }
 }
 
 export const createUserRepository = (prisma: PrismaClient) =>

@@ -36,4 +36,100 @@ describe('AuthService', () => {
       data: { ...userData, password: expect.any(String) },
     });
   });
+
+  it('should update only the name', async () => {
+    const created = await authService.register({
+      email: 'name@example.com',
+      password: 'password123',
+    });
+
+    const result = await authService.updateProfile(created.id, { name: '  Ada  ' });
+
+    expect(result.name).toBe('Ada');
+    expect(result.email).toBe('name@example.com');
+    expect(mockPrismaClient.user.update).toHaveBeenCalledWith({
+      where: { id: created.id },
+      data: { name: 'Ada' },
+    });
+  });
+
+  it('should reject an empty name', async () => {
+    const created = await authService.register({
+      email: 'empty@example.com',
+      password: 'password123',
+    });
+
+    await expect(authService.updateProfile(created.id, { name: '   ' })).rejects.toThrow(
+      'Name cannot be empty'
+    );
+  });
+
+  it('should change the password when the current one is correct', async () => {
+    const created = await authService.register({
+      email: 'pw@example.com',
+      password: 'old-password',
+    });
+
+    const result = await authService.changePassword(created.id, {
+      currentPassword: 'old-password',
+      newPassword: 'new-password',
+    });
+
+    expect(result.id).toBe(created.id);
+    const login = await authService.login({ email: 'pw@example.com', password: 'new-password' });
+    expect(login.user.id).toBe(created.id);
+  });
+
+  it('should reject a wrong current password', async () => {
+    const created = await authService.register({
+      email: 'wrong@example.com',
+      password: 'old-password',
+    });
+
+    await expect(
+      authService.changePassword(created.id, {
+        currentPassword: 'nope',
+        newPassword: 'new-password',
+      })
+    ).rejects.toThrow('Current password is incorrect');
+  });
+
+  it('should soft-delete and block login afterwards', async () => {
+    const created = await authService.register({
+      email: 'bye@example.com',
+      password: 'password123',
+    });
+
+    await authService.deleteAccount(created.id);
+
+    await expect(
+      authService.login({ email: 'bye@example.com', password: 'password123' })
+    ).rejects.toThrow('Wrong email or password');
+  });
+
+  it('should block re-registering a deleted email', async () => {
+    const created = await authService.register({
+      email: 'gone@example.com',
+      password: 'password123',
+    });
+
+    await authService.deleteAccount(created.id);
+
+    await expect(
+      authService.register({ email: 'gone@example.com', password: 'password123' })
+    ).rejects.toThrow('cannot be registered again');
+  });
+
+  it('should block Google sign-in for a deleted account', async () => {
+    const created = await authService.register({
+      email: 'goo@example.com',
+      password: 'password123',
+    });
+
+    await authService.deleteAccount(created.id);
+
+    await expect(
+      authService.findOrCreateGoogleUser({ googleId: 'g-1', email: 'goo@example.com' })
+    ).rejects.toThrow('cannot be used again');
+  });
 });
