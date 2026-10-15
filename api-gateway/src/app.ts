@@ -14,6 +14,12 @@ app.use(cors());
 app.use(helmet());
 app.use(hpp());
 
+// Health Check Route (exempt from rate limiting so warmup polling
+// from the UI never consumes a visitor's request budget).
+app.get('/health', (_req, res) => {
+  res.status(StatusCodes.OK).json({ status: 'OK' });
+});
+
 // Rate Limiting Middleware
 app.use(rateLimitter);
 
@@ -42,11 +48,6 @@ app.use(
     pathRewrite: { '^/api/analytics': '' },
   })
 );
-
-// Health Check Route
-app.get('/health', (_req, res) => {
-  res.status(StatusCodes.OK).json({ status: 'OK' });
-});
 
 // Redirect route for short URLs
 app.get(
